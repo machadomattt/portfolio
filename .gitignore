@@ -1,0 +1,29 @@
+node_modules
+dist
+dist-ssr
+*.local
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/screenshots/
+tests/e2e/_*.spec.ts
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.claude/scheduled_tasks.lock
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+server.log
+
+# Env
+.env
+.env.*
+!.env.example

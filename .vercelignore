@@ -1,0 +1,8 @@
+server
+tests
+test-results
+playwright-report
+scripts
+screenshots
+Dockerfile
+.dockerignore
