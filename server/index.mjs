@@ -20,8 +20,9 @@ const LIVE_JSON_PATH = path.join(ROOT, 'test-results', 'live-run.json')
 
 const PORT = Number(process.env.PORT) || 3001
 const COOLDOWN_MS = 30_000
-const MAX_RUNTIME_MS = 120_000
+const MAX_RUNTIME_MS = 180_000
 const MAX_BUFFER_LINES = 2000
+const HEARTBEAT_MS = 15_000
 
 // Set when the frontend is hosted separately (e.g. on Vercel) from this
 // backend (e.g. on Render). ALLOWED_ORIGIN lets that frontend's origin call
@@ -74,8 +75,11 @@ function startRun(selfBaseUrl) {
   // request (there's no user input at all on this route) ever reaches argv.
   // Two reporters: "line" for the human-readable log streamed below, "json"
   // (written to LIVE_JSON_PATH, not stdout) so the structured results table
-  // in the Tests section can be populated from this very run once it ends.
-  const child = spawn('npx', ['playwright', 'test', '--project=chromium', '--reporter=line,json'], {
+  // in the Tests section can be populated from this run once it ends.
+  // --workers=1: on a fractional-vCPU host (e.g. Render's free tier), several
+  // Playwright workers fight over the same sliver of CPU and end up slower
+  // in aggregate than running the suite serially, one test at a time.
+  const child = spawn('npx', ['playwright', 'test', '--project=chromium', '--workers=1', '--reporter=line,json'], {
     cwd: ROOT,
     shell: true,
     env: {
@@ -169,7 +173,18 @@ app.get('/api/run/stream', (req, res) => {
   for (const line of buffer) res.write(`event: line\ndata: ${line}\n\n`)
 
   clients.add(res)
-  req.on('close', () => clients.delete(res))
+
+  // A run on a fractional-vCPU host can go long stretches between lines —
+  // long enough for an intermediary proxy (common on free hosting tiers) to
+  // decide the idle connection is dead and close it. An SSE comment (a line
+  // starting with ":") is invisible to EventSource but still counts as
+  // traffic, so it keeps the connection open through those gaps.
+  const heartbeat = setInterval(() => res.write(': ping\n\n'), HEARTBEAT_MS)
+
+  req.on('close', () => {
+    clearInterval(heartbeat)
+    clients.delete(res)
+  })
 })
 
 app.use(express.static(DIST))
