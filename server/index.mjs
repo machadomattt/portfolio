@@ -76,10 +76,12 @@ function startRun(selfBaseUrl) {
   // Two reporters: "line" for the human-readable log streamed below, "json"
   // (written to LIVE_JSON_PATH, not stdout) so the structured results table
   // in the Tests section can be populated from this run once it ends.
-  // --workers=1: on a fractional-vCPU host (e.g. Render's free tier), several
-  // Playwright workers fight over the same sliver of CPU and end up slower
-  // in aggregate than running the suite serially, one test at a time.
-  const child = spawn('npx', ['playwright', 'test', '--project=chromium', '--workers=1', '--reporter=line,json'], {
+  // --workers=2: a fractional-vCPU host (e.g. Render's free tier, 0.1 vCPU)
+  // can't usefully run Playwright's auto-detected worker count (based on the
+  // host's real core count, not the throttled quota) — they'd all fight over
+  // the same sliver of CPU. A small fixed number lets navigation/render wait
+  // time in one test overlap with another without over-committing that quota.
+  const child = spawn('npx', ['playwright', 'test', '--project=chromium', '--workers=2', '--reporter=line,json'], {
     cwd: ROOT,
     shell: true,
     env: {

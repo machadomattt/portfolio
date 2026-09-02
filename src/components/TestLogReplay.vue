@@ -147,7 +147,7 @@ onUnmounted(() => {
       <p v-if="status === 'idle'" class="console-hint">
         Clique em "Rodar testes ao vivo" para executar de verdade, agora, a suíte Playwright real contra esta
         instância — sem dados pré-gravados. Por segurança, só uma execução roda por vez e há um intervalo mínimo
-        entre execuções.
+        entre execuções. Como isso roda num servidor de hospedagem gratuita, pode levar até 1-2 minutos.
       </p>
 
       <p v-if="status === 'error'" class="console-hint console-error">{{ errorMessage }}</p>
