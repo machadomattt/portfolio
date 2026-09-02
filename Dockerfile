@@ -18,7 +18,10 @@ ENV NODE_ENV=production
 ENV PORT=8080
 
 COPY package.json package-lock.json ./
-RUN npm ci
+# --include=dev: NODE_ENV=production above makes plain `npm ci` skip
+# devDependencies, but @playwright/test lives there — this image needs it
+# at runtime (not just for building) to actually spawn `npx playwright test`.
+RUN npm ci --include=dev
 
 COPY server ./server
 COPY scripts ./scripts
