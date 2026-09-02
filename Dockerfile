@@ -21,9 +21,11 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY server ./server
+COPY scripts ./scripts
 COPY tests ./tests
 COPY playwright.config.ts ./
 COPY --from=build /app/dist ./dist
+RUN mkdir -p test-results
 
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s CMD node -e "fetch('http://localhost:'+(process.env.PORT||8080)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
